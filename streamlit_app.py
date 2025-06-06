@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
-import plotly as px
+import plotly.express as px
 from datetime import datetime, timedelta
 import time
 import os
