@@ -162,11 +162,13 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # تحميل بيانات حقيقية
+# استبدال دالة تحميل البيانات بهذا الكود
 @st.cache_data
 def load_real_data():
     try:
-        # الحصول على بيانات من ياهو فاينانس
+        # تحميل بيانات GDP
         gdp = yf.download('TURGDP=ECI', period="20y")['Close'].dropna()
+        # تحميل بيانات التضخم
         inflation = yf.download('TURCPI=ECI', period="20y")['Close'].dropna()
         
         # إنشاء إطار بيانات موحد
@@ -179,7 +181,7 @@ def load_real_data():
         annual_df = df.groupby('Year').mean().reset_index()
         return annual_df.tail(25)  # آخر 25 سنة
     except Exception as e:
-        st.error(f"خطأ في تحميل البيانات: {str(e)}")
+        st.warning("Using sample data as fallback")
         return load_sample_data()
 
 def load_sample_data():
@@ -483,18 +485,36 @@ if st.sidebar.button("🚀 " + t['run_analysis']):
                      delta=f"{forecast[i] - current_value:.1f}%")
 
 # قسم التقارير
-st.sidebar.header("📊 " + t['download_report'])
-report_type = st.sidebar.radio("نوع التقرير", ["تقرير مختصر", "تقرير مفصل"])
-
+# استبدال قسم إنشاء PDF بهذا الكود
 if st.sidebar.button("📥 " + t['download_report']):
     with st.spinner("جاري إنشاء التقرير..."):
-        progress_bar = st.sidebar.progress(0)
-        for i in range(100):
-            progress_bar.progress(i + 1)
-            time.sleep(0.01)
-        
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = f"EconoPredict_Report_{timestamp}.pdf"
+        filename = f"EconoPredict_Report_{timestamp}.txt"
+        
+        # إنشاء ملف نصي بدلاً من PDF
+        with open(filename, "w", encoding="utf-8") as f:
+            f.write(f"تقرير EconoPredict - {datetime.now().strftime('%Y-%m-%d')}\n")
+            f.write(f"نموذج: {selected_model}\n")
+            f.write(f"المؤشر: {selected_indicator}\n\n")
+            
+            if selected_indicator == t['gdp_growth']:
+                years, forecast = forecast_gdp(selected_model, forecast_years)
+                for i, year in enumerate(years):
+                    f.write(f"تنبؤ الناتج المحلي لسنة {year}: {forecast[i]:.1f}%\n")
+            else:
+                years, forecast = forecast_inflation(selected_model, forecast_years)
+                for i, year in enumerate(years):
+                    f.write(f"تنبؤ التضخم لسنة {year}: {forecast[i]:.1f}%\n")
+        
+    st.sidebar.success(f"✅ {t['report_generated']}")
+    with open(filename, "rb") as file:
+        st.sidebar.download_button(
+            label="⬇️ " + t['download_report'],
+            data=file,
+            file_name=filename,
+            mime="text/plain"
+        )
+    os.remove(filename)
         
         # محاكاة إنشاء ملف PDF
         from fpdf import FPDF
@@ -529,12 +549,12 @@ if st.sidebar.button("📥 " + t['download_report']):
         )
     os.remove(filename)
 
-# تذييل الصفحة
+# Footer
 st.markdown("---")
 st.markdown("""
 <div class="footer">
-    <strong>EconoPredict</strong> - نظام متقدم للتنبؤ الاقتصادي<br>
-    تم تطويره بواسطة: يوسف اولاد محمد<br>
-    © 2023 جميع الحقوق محفوظة | الإصدار 2.1
+    <strong>EconoPredict</strong> - Advanced economic forecasting system<br>
+    Developed by: yousef awladmohammed<br>
+    © 2023 All rights reserved | Version 2.1
 </div>
 """, unsafe_allow_html=True)
