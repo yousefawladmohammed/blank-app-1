@@ -484,27 +484,28 @@ if st.sidebar.button("🚀 " + t['run_analysis']):
                      f"{forecast[i]:.1f}%",
                      delta=f"{forecast[i] - current_value:.1f}%")
 
-# قسم التقارير
-# استبدال قسم إنشاء PDF بهذا الكود
 if st.sidebar.button("📥 " + t['download_report']):
     with st.spinner("جاري إنشاء التقرير..."):
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         filename = f"EconoPredict_Report_{timestamp}.txt"
         
-        # إنشاء ملف نصي بدلاً من PDF
+        # محتوى التقرير
+        report_content = f"تقرير EconoPredict - {datetime.now().strftime('%Y-%m-%d')}\n"
+        report_content += f"نموذج: {selected_model}\n"
+        report_content += f"المؤشر: {selected_indicator}\n\n"
+        
+        if selected_indicator == t['gdp_growth']:
+            years, forecast = forecast_gdp(selected_model, forecast_years)
+            for i, year in enumerate(years):
+                report_content += f"تنبؤ الناتج المحلي لسنة {year}: {forecast[i]:.1f}%\n"
+        else:
+            years, forecast = forecast_inflation(selected_model, forecast_years)
+            for i, year in enumerate(years):
+                report_content += f"تنبؤ التضخم لسنة {year}: {forecast[i]:.1f}%\n"
+        
+        # إنشاء ملف نصي
         with open(filename, "w", encoding="utf-8") as f:
-            f.write(f"تقرير EconoPredict - {datetime.now().strftime('%Y-%m-%d')}\n")
-            f.write(f"نموذج: {selected_model}\n")
-            f.write(f"المؤشر: {selected_indicator}\n\n")
-            
-            if selected_indicator == t['gdp_growth']:
-                years, forecast = forecast_gdp(selected_model, forecast_years)
-                for i, year in enumerate(years):
-                    f.write(f"تنبؤ الناتج المحلي لسنة {year}: {forecast[i]:.1f}%\n")
-            else:
-                years, forecast = forecast_inflation(selected_model, forecast_years)
-                for i, year in enumerate(years):
-                    f.write(f"تنبؤ التضخم لسنة {year}: {forecast[i]:.1f}%\n")
+            f.write(report_content)
         
     st.sidebar.success(f"✅ {t['report_generated']}")
     with open(filename, "rb") as file:
